@@ -9,6 +9,7 @@
     <PropertyGroup>
         <Version>0.1.0</Version>
         <InformationalVersion>0.1.$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</InformationalVersion>
+        <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     </PropertyGroup>
 
   <ItemGroup>

@@ -44,6 +44,7 @@
 
 body {
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -51,6 +52,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   max-width: 100%;
   margin: 0;
 }
@@ -144,11 +146,45 @@ body {
   color: white;
 }
 
+@keyframes fish-nod {
+  0%, 100% { transform: rotate(-15deg); }
+  40%       { transform: rotate(-28deg); }
+  70%       { transform: rotate(-4deg);  }
+}
+
+.icon-wrap {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.version-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.version-tooltip.visible { display: block; }
+
 .header-icon {
   width: 36px;
   height: 36px;
-  color: var(--accent);
-  transform: rotate(-15deg);
+  animation: fish-nod 2s ease-in-out infinite;
+}
+
+.map-loading-icon {
+  width: 36px;
+  height: 36px;
+  animation: fish-nod 0.5s ease-in-out infinite;
 }
 
 /* Messages area */
@@ -159,6 +195,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.messages:has(.welcome) {
+  padding: 0;
+  overflow: hidden;
 }
 
 .message {
@@ -443,13 +484,8 @@ body {
 /* Welcome screen */
 .welcome {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  color: var(--text-secondary);
-  padding: 24px 24px 280px;
+  position: relative;
+  overflow: hidden;
 }
 
 .welcome-icon {
@@ -487,4 +523,147 @@ body {
   padding: 10px 14px;
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+/* Locations strip overlay */
+.locations-section {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  max-width: 480px;
+}
+
+.locations-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.locations-grid {
+  position: relative;
+  overflow: hidden;
+  height: 88px;
+}
+
+.location-card {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.location-map {
+  width: 120px;
+  height: 88px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+.location-map-placeholder {
+  width: 120px;
+  height: 88px;
+  flex-shrink: 0;
+  background: var(--user-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+
+.location-info {
+  flex: 1;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.location-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.location-meta {
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes lc-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes lc-slide-out {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+
+.location-card.lc-enter {
+  animation: lc-slide-in 0.4s ease forwards;
+}
+
+.location-card.lc-leave {
+  animation: lc-slide-out 0.4s ease forwards;
+}
+
+.locations-loading,
+.locations-empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px 0;
+}
+
+#fishing-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#map-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease;
+}
+
+#map-loading.map-loading-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.map-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #f97316;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

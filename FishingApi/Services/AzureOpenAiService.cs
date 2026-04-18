@@ -9,6 +9,10 @@ public class AzureOpenAiService
     private readonly IChatClient chatClient;
     private readonly FishingTools fishingTools;
     private static readonly string SystemPrompt = LoadSystemPrompt();
+    private static readonly System.Text.Json.JsonSerializerOptions AiFunctionJsonOptions = new(System.Text.Json.JsonSerializerDefaults.Web)
+    {
+        TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
+    };
 
     public AzureOpenAiService(IChatClient chatClient, FishingTools fishingTools)
     {
@@ -29,7 +33,7 @@ public class AzureOpenAiService
         var tools = typeof(FishingTools)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() != null)
-            .Select(m => AIFunctionFactory.Create(m, fishingTools))
+            .Select(m => AIFunctionFactory.Create(m, fishingTools, serializerOptions: AiFunctionJsonOptions))
             .Cast<AITool>()
             .ToList();
 
