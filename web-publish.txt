@@ -1,3 +1,0 @@
-cd C:\repo\Fishing\fishing-web
-  npm run build
-  swa deploy ./dist --deployment-token fd8abb6e0e24a8de6331f4c3c657bc50f4406fe6fc7707ef75614d91ee7cb23307-a8e4efb1-53d0-4d46-a509-ecfbdb3f70e601011070772fdc10 --env production
