@@ -18,7 +18,9 @@ public class CorsOptions
 public class DatabaseOptions
 {
     public string Server { get; set; } = string.Empty;
+    public string LocalServer { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public bool UseLocal { get; set; } = false;
 }
 
 public class UserMsiOptions
@@ -35,7 +37,12 @@ public class AzureOpenAIOptions
 
 public class LbsOptions
 {
+    public string BaseUrl { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
+    public string SigningKey { get; set; } = string.Empty;
+    public string JsBaseUrl { get; set; } = string.Empty;
+    public string JsApiKey { get; set; } = string.Empty;
+    public string JsSecurityCode { get; set; } = string.Empty;
 }
 
 public class BlobStorageOptions

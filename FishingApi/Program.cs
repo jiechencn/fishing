@@ -45,19 +45,21 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Database
+var useLocalDb = builder.Environment.IsDevelopment() && apiOptions.Database.UseLocal;
 var sqlConnectionBuilder = new SqlConnectionStringBuilder
 {
-    DataSource = apiOptions.Database.Server,
+    DataSource = useLocalDb ? apiOptions.Database.LocalServer : apiOptions.Database.Server,
     InitialCatalog = apiOptions.Database.Name
 };
-if (builder.Environment.IsDevelopment())
+if (useLocalDb)
 {
     sqlConnectionBuilder.IntegratedSecurity = true;
     sqlConnectionBuilder.TrustServerCertificate = true;
 }
 else
 {
-    sqlConnectionBuilder.UserID = apiOptions.UserMsi.Id;
+    if (!builder.Environment.IsDevelopment())
+        sqlConnectionBuilder.UserID = apiOptions.UserMsi.Id;
     sqlConnectionBuilder.Authentication = SqlAuthenticationMethod.ActiveDirectoryDefault;
 }
 builder.Services.AddDbContext<FishingContext>(options =>
@@ -91,8 +93,9 @@ builder.Services.AddTransient<LbsApiKeyHandler>();
 builder.Services.AddSingleton(apiOptions.Lbs);
 builder.Services.AddHttpClient<ILbsClient, LbsClient>(httpClient =>
 {
-    httpClient.BaseAddress = new Uri("https://restapi.amap.com/v3/");
+    httpClient.BaseAddress = new Uri(apiOptions.Lbs.BaseUrl);
 }).AddHttpMessageHandler<LbsApiKeyHandler>();
+builder.Services.AddHttpClient("LbsJsProxy");
 
 builder.Services.AddScoped<FishingTools>();
 builder.Services.AddScoped<SpeciesService>();

@@ -10,6 +10,14 @@ interface ChatMessage {
   content: string
 }
 
+interface LocationItem {
+  locationName: string
+  locationMap: string
+  imageLink: string
+  dateTime: string
+  fishType: string
+}
+
 const i18n = {
   en: {
     title: 'Fishing Agent',
@@ -30,6 +38,8 @@ const i18n = {
     photoUploaded: 'Photo uploaded successfully.',
     photoUploadFailed: 'Failed to upload photo.',
     loginRequired: 'Please sign in first to use the fishing assistant.',
+    locationsTitle: 'Locations',
+    noLocations: 'No locations recorded.',
     examples: [
       'Add a species "Bass" with description "Freshwater fish"',
       'Show all species',
@@ -56,6 +66,8 @@ const i18n = {
     photoUploaded: '照片上传成功。',
     photoUploadFailed: '照片上传失败。',
     loginRequired: '这是Jie的私人AI助理，请先登录。',
+    locationsTitle: '钓点记录',
+    noLocations: '暂无出钓记录。',
     examples: [
       '添加鱼种，描述它的特征和习性',
       '显示所有本地路亚鱼种',
@@ -77,6 +89,7 @@ function t() { return i18n[currentLang] }
 const history: ChatMessage[] = []
 let isLoading = false
 let selectedFile: File | null = null
+let locationCarouselTimer: ReturnType<typeof setInterval> | null = null
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
@@ -84,55 +97,26 @@ async function renderApp() {
   const lang = t()
   app.innerHTML = `
   <div class="header">
-    <svg class="header-icon" viewBox="0 0 64 64" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 28 C2 24 -2 20 4 16 C10 12 4 8 2 4" stroke="#999" stroke-width="0.5" fill="none"/>
-      <circle cx="8" cy="32" r="3" stroke="#999" stroke-width="1.5"/>
-      <path d="M12 32 Q20 24 32 24 Q46 24 50 32 Q46 40 32 40 Q20 40 12 32Z" fill="white" stroke="#666"/>
-      <path d="M12 32 Q16 26 22 26 Q26 26 26 32 Q26 38 22 38 Q16 38 12 32Z" fill="#ef4444" opacity="0.8" stroke="#ef4444"/>
-      <path d="M26 34 Q38 38 48 34" stroke="#ccc" stroke-width="1.5"/>
-      <line x1="30" y1="25" x2="32" y2="30" stroke="#ddd" stroke-width="1.5"/>
-      <line x1="36" y1="24.5" x2="38" y2="30" stroke="#ddd" stroke-width="1.5"/>
-      <line x1="42" y1="25.5" x2="43" y2="30" stroke="#ddd" stroke-width="1.5"/>
-      <path d="M50 32 L58 24 L58 40 Z" fill="#ef4444" opacity="0.3" stroke="#ef4444"/>
-      <circle cx="18" cy="31" r="2.5" fill="white" stroke="#333"/>
-      <circle cx="18.5" cy="31" r="1" fill="#333"/>
-      <line x1="24" y1="40" x2="24" y2="44" stroke="#999" stroke-width="1"/>
-      <path d="M24 44 Q24 49 20 49 Q17 47 20 44" stroke="#ef4444" stroke-width="1.2"/>
-      <path d="M24 44 Q24 49 28 49 Q31 47 28 44" stroke="#ef4444" stroke-width="1.2"/>
-      <line x1="42" y1="40" x2="42" y2="44" stroke="#999" stroke-width="1"/>
-      <path d="M42 44 Q42 49 38 49 Q35 47 38 44" stroke="#ef4444" stroke-width="1.2"/>
-      <path d="M42 44 Q42 49 46 49 Q49 47 46 44" stroke="#ef4444" stroke-width="1.2"/>
-      <path d="M12 32 L6 38" stroke="#2563eb" stroke-width="2.5"/>
-    </svg>
-    <h1>${lang.title} <span class="version" id="version"></span></h1>
+    <div class="icon-wrap" id="icon-wrap">
+      <img src="/icon.png" class="header-icon" alt="fishing icon" />
+      <div class="version-tooltip" id="version-tooltip">v...</div>
+    </div>
+    <h1>${lang.title}</h1>
     <div class="auth-area" id="auth-area"></div>
   </div>
   <div class="messages" id="messages">
     <div class="welcome">
-      <svg class="welcome-icon" viewBox="0 0 64 64" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 28 C2 24 -2 20 4 16 C10 12 4 8 2 4" stroke="#999" stroke-width="0.5" fill="none"/>
-        <circle cx="8" cy="32" r="3" stroke="#999" stroke-width="1.5"/>
-        <path d="M12 32 Q20 24 32 24 Q46 24 50 32 Q46 40 32 40 Q20 40 12 32Z" fill="white" stroke="#666"/>
-        <path d="M12 32 Q16 26 22 26 Q26 26 26 32 Q26 38 22 38 Q16 38 12 32Z" fill="#ef4444" opacity="0.8" stroke="#ef4444"/>
-        <path d="M26 34 Q38 38 48 34" stroke="#ccc" stroke-width="1.5"/>
-        <line x1="30" y1="25" x2="32" y2="30" stroke="#ddd" stroke-width="1.5"/>
-        <line x1="36" y1="24.5" x2="38" y2="30" stroke="#ddd" stroke-width="1.5"/>
-        <line x1="42" y1="25.5" x2="43" y2="30" stroke="#ddd" stroke-width="1.5"/>
-        <path d="M50 32 L58 24 L58 40 Z" fill="#ef4444" opacity="0.3" stroke="#ef4444"/>
-        <circle cx="18" cy="31" r="2.5" fill="white" stroke="#333"/>
-        <circle cx="18.5" cy="31" r="1" fill="#333"/>
-        <line x1="24" y1="40" x2="24" y2="44" stroke="#999" stroke-width="1"/>
-        <path d="M24 44 Q24 49 20 49 Q17 47 20 44" stroke="#ef4444" stroke-width="1.2"/>
-        <path d="M24 44 Q24 49 28 49 Q31 47 28 44" stroke="#ef4444" stroke-width="1.2"/>
-        <line x1="42" y1="40" x2="42" y2="44" stroke="#999" stroke-width="1"/>
-        <path d="M42 44 Q42 49 38 49 Q35 47 38 44" stroke="#ef4444" stroke-width="1.2"/>
-        <path d="M42 44 Q42 49 46 49 Q49 47 46 44" stroke="#ef4444" stroke-width="1.2"/>
-        <path d="M12 32 L6 38" stroke="#2563eb" stroke-width="2.5"/>
-      </svg>
-      <h2>${lang.title}</h2>
-      <p>${lang.welcomeDesc}</p>
-      <div class="tools-list">
-        ${lang.tools.map(tool => `<div class="tool-item">${tool}</div>`).join('')}
+      <div class="locations-section">
+        <div class="locations-grid" id="locations-list">
+          <div class="locations-loading">···</div>
+        </div>
+      </div>
+      <div id="fishing-map"></div>
+      <div id="map-loading">
+        <div class="map-loading-content">
+          <img src="/icon.png" class="map-loading-icon" alt="fishing icon" />
+          <div class="map-spinner"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -164,6 +148,64 @@ async function renderApp() {
   bindEvents()
   fetchVersion()
   await renderAuthUI()
+  loadLocations()
+  initLocaMap()
+}
+
+async function fetchLocations(): Promise<LocationItem[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/activities`)
+    if (res.ok) return await res.json()
+  } catch { /* ignore */ }
+  return []
+}
+
+function renderLocationCard(item: LocationItem, cls: string): string {
+  const date = new Date(item.dateTime)
+  const dateStr = date.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'short', day: 'numeric' })
+  const thumbHtml = item.imageLink
+    ? `<img class="location-map" src="${item.imageLink}" alt="">`
+    : item.locationMap
+      ? `<img class="location-map" src="${item.locationMap}" alt="">`
+      : `<div class="location-map-placeholder">📍</div>`
+  return `
+    <div class="location-card ${cls}">
+      ${thumbHtml}
+      <div class="location-info">
+        <div class="location-name">${escapeHtml(item.locationName)}</div>
+        <div class="location-meta">${escapeHtml(item.fishType)} · ${dateStr}</div>
+      </div>
+    </div>`
+}
+
+async function loadLocations() {
+  if (locationCarouselTimer) {
+    clearInterval(locationCarouselTimer)
+    locationCarouselTimer = null
+  }
+  const container = document.getElementById('locations-list')
+  if (!container) return
+  const items = await fetchLocations()
+  if (items.length === 0) {
+    container.innerHTML = `<span class="locations-empty">${t().noLocations}</span>`
+    return
+  }
+  let idx = 0
+  container.innerHTML = renderLocationCard(items[0], 'lc-enter')
+  if (items.length > 1) {
+    locationCarouselTimer = setInterval(() => {
+      const el = document.getElementById('locations-list')
+      if (!el) { clearInterval(locationCarouselTimer!); locationCarouselTimer = null; return }
+      const current = el.querySelector('.location-card')
+      if (current) current.classList.replace('lc-enter', 'lc-leave')
+      setTimeout(() => {
+        const el2 = document.getElementById('locations-list')
+        if (!el2) return
+        idx = (idx + 1) % items.length
+        el2.innerHTML = renderLocationCard(items[idx], 'lc-enter')
+      }, 400)
+    }, 3000)
+  }
 }
 
 async function renderAuthUI() {
@@ -196,15 +238,158 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return { 'Content-Type': 'application/json' }
 }
 
+function showApiError() {
+  const el = document.getElementById('map-loading')
+  if (!el) return
+  el.innerHTML = `
+    <div style="text-align:center;color:#fff;padding:32px 24px">
+      <img src="/icon.png" style="width:48px;height:48px;transform:rotate(-15deg);opacity:0.6;margin-bottom:16px" />
+      <p style="font-size:16px;font-weight:600;margin-bottom:8px">鱼儿都跑了</p>
+      <p style="font-size:13px;color:#888;margin-bottom:20px">联系一下主人吧</p>
+      <button onclick="location.reload()" style="padding:8px 24px;background:#f97316;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:14px;font-family:inherit">再试一次</button>
+    </div>
+  `
+}
+
 async function fetchVersion() {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8000)
   try {
-    const res = await fetch(`${API_BASE}/api/about`)
+    const res = await fetch(`${API_BASE}/api/about`, { signal: controller.signal })
+    clearTimeout(timer)
     if (res.ok) {
       const data = await res.json()
-      const el = document.getElementById('version')
-      if (el) el.textContent = `v${data.version}`
+      const el = document.getElementById('version-tooltip')
+      if (el) el.textContent = `v${(data.version as string).split('+')[0]}`
+      if (data.jsApiKey) initAmap(data.jsApiKey)
+    } else {
+      showApiError()
     }
-  } catch { /* ignore */ }
+  } catch {
+    showApiError()
+  }
+}
+
+function initAmap(jsApiKey: string) {
+  if (document.querySelector('script[data-amap]')) return
+  ;(window as any)._AMapSecurityConfig = { serviceHost: `${API_BASE}/_AMapService` }
+
+  ;(window as any)._onAMapLoaded = () => {
+    const locaScript = document.createElement('script')
+    locaScript.setAttribute('data-loca', '1')
+    locaScript.src = `https://webapi.amap.com/loca?v=2.0.0&key=${encodeURIComponent(jsApiKey)}`
+    locaScript.onload = () => initLocaMap()
+    document.head.appendChild(locaScript)
+  }
+
+  const amapScript = document.createElement('script')
+  amapScript.setAttribute('data-amap', '1')
+  amapScript.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(jsApiKey)}&callback=_onAMapLoaded`
+  document.head.appendChild(amapScript)
+}
+
+function emojiToDataUrl(emoji: string, size = 48, circleColor?: string): string {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  if (circleColor) {
+    const r = size / 2 - 2
+    ctx.beginPath()
+    ctx.arc(size / 2, size / 2, r, 0, Math.PI * 2)
+    ctx.strokeStyle = circleColor
+    ctx.lineWidth = 3
+    ctx.stroke()
+  }
+  ctx.font = `${size * 0.7}px serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(emoji, size / 2, size / 2)
+  return canvas.toDataURL()
+}
+
+let _amapInstance: any = null
+
+function initLocaMap() {
+  const AMap = (window as any).AMap
+  const Loca = (window as any).Loca
+  if (!AMap || !Loca) return
+
+  const container = document.getElementById('fishing-map')
+  if (!container) return
+
+  if (_amapInstance) { _amapInstance.destroy(); _amapInstance = null }
+
+  const map = new AMap.Map('fishing-map', {
+    zoom: 11,
+    showLabel: false,
+    viewMode: '3D',
+    center: [120.72, 31.36],
+    mapStyle: 'amap://styles/28f5f1e7774710f2d218ab9ba738b444',
+  })
+  _amapInstance = map
+
+  map.setLimitBounds(new AMap.Bounds([120.54, 31.24], [120.85, 31.55]))
+
+  map.on('complete', () => {
+    const el = document.getElementById('map-loading')
+    if (el) el.classList.add('map-loading-done')
+  })
+
+  const loca = new Loca.Container({ map })
+
+  const labelsLayer = new Loca.LabelsLayer({ zooms: [3, 20] })
+
+  const geo = new Loca.GeoJSONSource({
+    url: `${API_BASE}/api/activities/geojson`,
+  })
+
+  labelsLayer.setSource(geo)
+  labelsLayer.setStyle({
+    icon: {
+      type: 'image',
+      image: emojiToDataUrl('🐟', 48, '#f97316'),
+      size: [40, 40],
+      anchor: 'center',
+    },
+    text: {
+      content: (_: number, feature: any) => feature.properties.name,
+      style: {
+        fontSize: 12,
+        fontWeight: 'normal',
+        fillColor: '#fff',
+        strokeColor: '#000',
+        strokeWidth: 2,
+        backgroundColor: '#000',
+        padding: [2, 6],
+        borderRadius: 4,
+      },
+      direction: 'bottom',
+    },
+    extData: (_: number, feature: any) => feature.properties,
+  })
+
+  loca.add(labelsLayer)
+
+  labelsLayer.on('complete', () => {
+    const normalMarker = new AMap.Marker({ offset: [70, -15] })
+    const labelMarkers = labelsLayer.getLabelsLayer().getAllOverlays()
+    for (const marker of labelMarkers) {
+      marker.on('mouseover', (e: any) => {
+        if (!e.target.getCollision()) {
+          const position = e.data.data && e.data.data.position
+          if (position) {
+            normalMarker.setContent(
+              '<div class="amap-info-window" style="white-space:nowrap;padding:4px 8px;background:#000;color:#fff;border-radius:4px;font-size:12px">' + marker.getExtData().address + '</div>'
+            )
+            normalMarker.setPosition(position)
+            map.add(normalMarker)
+          }
+        }
+      })
+      marker.on('mouseout', () => map.remove(normalMarker))
+    }
+  })
 }
 
 function bindEvents() {
@@ -214,6 +399,16 @@ function bindEvents() {
   const attachBtn = document.getElementById('attach-btn') as HTMLButtonElement
   const fileInput = document.getElementById('file-input') as HTMLInputElement
   const fileIndicator = document.getElementById('file-indicator') as HTMLDivElement
+
+  document.getElementById('icon-wrap')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    document.getElementById('version-tooltip')?.classList.toggle('visible')
+  })
+  document.addEventListener('click', (e) => {
+    if (!(e.target as Element).closest('#icon-wrap')) {
+      document.getElementById('version-tooltip')?.classList.remove('visible')
+    }
+  })
 
   inputEl.addEventListener('input', () => {
     inputEl.style.height = 'auto'
@@ -432,7 +627,7 @@ async function sendMessage(messagesEl: HTMLElement, inputEl: HTMLTextAreaElement
     }
   } catch {
     removeThinking()
-    addMessageToUI(messagesEl, 'assistant', lang.connectError)
+    addMessageToUI(messagesEl, 'assistant', '鱼儿都跑了，联系一下主人吧')
   }
 
   isLoading = false

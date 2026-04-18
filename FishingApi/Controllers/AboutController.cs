@@ -1,4 +1,5 @@
 using System.Reflection;
+using FishingApi.Options;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FishingApi.Controllers;
@@ -7,6 +8,13 @@ namespace FishingApi.Controllers;
 [Route("api/[controller]")]
 public class AboutController : ControllerBase
 {
+    private readonly LbsOptions _lbsOptions;
+
+    public AboutController(LbsOptions lbsOptions)
+    {
+        _lbsOptions = lbsOptions;
+    }
+
     [HttpGet]
     public IActionResult Get()
     {
@@ -14,6 +22,6 @@ public class AboutController : ControllerBase
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
             ?.InformationalVersion ?? "unknown";
 
-        return Ok(new { version });
+        return Ok(new { version, jsApiKey = _lbsOptions.JsApiKey });
     }
 }

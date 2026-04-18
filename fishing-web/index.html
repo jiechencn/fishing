@@ -6,11 +6,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <style>
+      @keyframes fish-nod {
+        0%, 100% { transform: rotate(-15deg); }
+        40%       { transform: rotate(-28deg); }
+        70%       { transform: rotate(-4deg);  }
+      }
+      #app-loading img { animation: fish-nod 0.5s ease-in-out infinite; }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>路亚圣手</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div id="app-loading" style="position:fixed;inset:0;z-index:9999;background:#0f0f0f;display:flex;align-items:center;justify-content:center;height:100dvh">
+        <img src="/icon.png" style="width:36px;height:36px" alt="" />
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
